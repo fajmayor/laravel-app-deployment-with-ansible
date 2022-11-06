@@ -1,0 +1,31 @@
+- name: Check apache2 server
+  apt:
+    name: apache2
+    state: latest
+    update_cache: yes
+
+- name: Sets Apache2 conf file
+  template:
+    src: "apache2.conf.j2"
+    dest: "/etc/apache2/sites-available/{{ http_conf }}.conf"
+    
+
+- name: Enable new site
+  file:
+    src: "/etc/apache2/sites-available/{{ http_conf }}"
+    dest: "/etc/apache2/sites-enabled/{{ http_conf }}"
+    state: link
+  notify: Reload apache2
+
+- name: Removes "default" site
+  file:
+    path: "/etc/apache2/sites-enabled/default"
+    state: absent
+  notify: Reload apache2
+
+# UFW Configuration
+- name: "UFW - Allow HTTP on port {{ http_port }}"
+  ufw:
+    rule: allow
+    port: "{{ http_port }}"
+    proto: tcp

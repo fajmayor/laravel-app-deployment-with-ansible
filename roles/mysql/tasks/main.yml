@@ -1,0 +1,111 @@
+---
+- name: Update "apt" 
+  apt:
+   update_cache: yes
+   autoclean: yes 
+   autoremove: yes
+
+- name: Install MYSQL Download
+  ansible.builtin.apt:
+    deb: https://dev.mysql.com/get/mysql-apt-config_0.8.24-1_all.deb
+    state: present
+
+- name: Installing Mysql  and dependencies
+  package:
+    name: "{{item}}"
+    state: latest
+    update_cache: yes
+  loop:
+    - mysql-server
+    - mysql-client
+    - python3-mysqldb
+    - libmysqlclient-dev
+  become: yes
+
+#- name: Install MySQL-server
+#  apt:
+#    name: mysql-server
+#    state: latest
+
+#- name: Adds Python MySQL support on Debian/Ubuntu
+#  apt: pkg="python3-pymysql" state=present
+#- name: Install pyMySql library
+#  pip: name=pymysql state=latest
+
+- name: Start mysql server
+  service:
+    name: mysql
+    state: started
+    enabled: true
+
+- name: Configure mysql default settings
+  command: mysql -u root -e 'UPDATE mysql.user SET plugin="mysql_native_password" WHERE user="root" AND host="localhost"'
+  ignore_errors: yes
+  no_log: true
+
+- name: Reload all previliges
+  command: mysql -u root -e 'FLUSH PRIVILEGES'
+  ignore_errors: yes
+  no_log: true
+
+- name: Set mysql root password
+  mysql_user:
+    login_host: 'localhost'
+    login_user: 'root'
+    login_password: ''
+    name: 'root'
+    password: '{{ mysql_root_password }}'
+    state: present
+  ignore_errors: yes
+  no_log: true
+
+- name: Delete Annonymous users
+  mysql_user:
+    login_user: 'root'
+    login_password: "{{ mysql_root_password }}"
+    name: ''
+    host: localhost
+    state: absent
+  ignore_errors: yes
+  no_log: true
+
+# MariaDB Configuration
+#- name: Sets the root password
+#  mysql_user:
+#    name: root
+#    password: "{{ mysql_root_password }}"
+#    login_unix_socket: /var/run/mysqld/mysqld.sock
+#  no_log: true
+
+#- name: Removes all anonymous user accounts
+#  mysql_user:
+#    name: ''
+#    host_all: yes
+#    state: absent
+#    login_unix_socket: /var/run/mysqld/mysqld.sock
+#  no_log: true
+
+#- name: Removes the MySQL test database
+#  mysql_db:
+#    name: test
+#    state: absent
+#    login_unix_socket: /var/run/mysqld/mysqld.sock
+
+- name: Creates App Database
+  mysql_db:
+    login_user: 'root'
+    login_password: "{{ mysql_root_password }}"
+    name: "{{ mysql_app_db }}"
+    state: present
+#    login_unix_socket: /var/run/mysqld/mysqld.sock
+
+- name: Create App MySQL user and grants access to App DB
+  mysql_user:
+    login_user: 'root'
+    login_password: "{{ mysql_root_password }}"
+    name: "{{ mysql_app_user }}"
+    password: "{{ mysql_app_pass }}"
+    priv: "{{ mysql_app_db }}.*:ALL"
+    state: present
+#    login_unix_socket: /var/run/mysqld/mysqld.sock
+  no_log: true

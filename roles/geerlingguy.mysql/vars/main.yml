@@ -1,0 +1,10 @@
+mysql_root_password: "{{ mysql_root_password }}"
+mysql_databases:
+  - name: "{{ mysql_app_db }}"
+    encoding: latin1
+    collation: latin1_general_ci
+mysql_users:
+  - name: "{{ mysql_app_user }}"
+    host: "%"
+    password: "{{ mysql_app_pass }}"
+    priv: "{{ mysql_app_db }}.*:ALL"

@@ -1,0 +1,15 @@
+---
+- hosts: dev
+  become: true
+  gather_facts: false
+
+  roles:
+    - { role: setup, tags: ['setup'] }
+
+    - { role: php, tags: ['php', 'web', 'php-fpm', 'lemp'] }
+
+    - { role: mysql, tags: ['mysql', 'mariadb', 'db', 'lemp'] }
+
+    - { role: apache, tags: ['apache', 'web', 'http', 'lemp'] }
+
+    - { role: composer, tags: ['composer'] }
